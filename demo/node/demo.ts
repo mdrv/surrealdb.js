@@ -1,4 +1,4 @@
-import { createNodeEngines } from "@surrealdb/node";
+import { createNodeEngines } from "@mdrv/surreal-node";
 import { RecordId, Surreal, Table } from "surrealdb";
 
 const surreal = new Surreal({
