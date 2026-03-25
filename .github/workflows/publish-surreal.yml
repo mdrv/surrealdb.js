@@ -14,10 +14,37 @@ permissions:
   id-token: write
 
 jobs:
+  # Build SDK (dependency for Node package)
+  build-sdk:
+    name: Build SDK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.21
+
+      - name: Code Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build SDK
+        run: bun run build:sdk
+
+      - name: Upload SDK artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: sdk-artifacts
+          retention-days: 1
+          path: packages/sdk/dist/
+
   # Build Node package using GCC cross-compilation (no Zig) to avoid ABI issues
   build-node:
     name: Build Node - ${{ matrix.settings.name }}
     runs-on: ${{ matrix.settings.host }}
+    needs: build-sdk
     strategy:
       fail-fast: false
       matrix:
@@ -25,10 +52,12 @@ jobs:
           - name: Linux x86_64 (gnu)
             host: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
+            build: bun run build
 
           - name: Linux aarch64 (gnu)
             host: ubuntu-22.04
             target: aarch64-unknown-linux-gnu
+            build: bun run build --target aarch64-unknown-linux-gnu
     steps:
       - name: Code Checkout
         uses: actions/checkout@v6
@@ -63,10 +92,16 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Download SDK artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: sdk-artifacts
+          path: packages/sdk/dist/
+
       - name: Build Node package
         shell: bash
         working-directory: packages/node
-        run: bun run build ${{ matrix.settings.target == 'aarch64-unknown-linux-gnu' && '--target aarch64-unknown-linux-gnu' || '' }}
+        run: ${{ matrix.settings.build }}
         env:
           CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
           CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
@@ -107,6 +142,12 @@ jobs:
 
       - name: Install dependencies
         run: bun install
+
+      - name: Download SDK artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: sdk-artifacts
+          path: packages/sdk/dist/
 
       - name: Download Node artifacts
         uses: actions/download-artifact@v8
@@ -154,6 +195,12 @@ jobs:
 
       - name: Install dependencies
         run: bun install
+
+      - name: Download SDK artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: sdk-artifacts
+          path: packages/sdk/dist/
 
       - name: Download Node artifacts
         uses: actions/download-artifact@v8

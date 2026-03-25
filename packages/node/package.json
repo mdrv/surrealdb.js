@@ -5,7 +5,7 @@
     "type": "module",
     "license": "Apache-2.0",
     "description": "Emeddable Node.js, Bun, and Deno engine for SurrealDB",
-    "homepage": "https://github.com/surrealdb/surrealdb.js",
+    "homepage": "https://github.com/mdrv/surrealdb.js",
     "keywords": [
         "surrealdb",
         "surrealdb.js",
@@ -16,7 +16,7 @@
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/surrealdb/surrealdb.js.git"
+        "url": "git+https://github.com/mdrv/surrealdb.js.git"
     },
     "scripts": {
         "build": "bun run build.ts",
