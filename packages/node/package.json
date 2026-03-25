@@ -1,6 +1,6 @@
 {
     "name": "@mdrv/surreal-node",
-    "version": "3.0.3",
+    "version": "3.0.4-alpha.1",
     "surreal": "3.0.2",
     "type": "module",
     "license": "Apache-2.0",

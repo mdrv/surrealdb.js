@@ -62,9 +62,14 @@ await Bun.spawn(buildCmd, {
     stderr: "inherit",
     env: {
         ...process.env,
+        // Linux aarch64 (gnu) cross-compilation
         CFLAGS_aarch64_unknown_linux_gnu: "-D__ARM_ARCH=8",
         CXX_aarch64_unknown_linux_gnu: "aarch64-linux-gnu-g++",
         CC_aarch64_unknown_linux_gnu: "aarch64-linux-gnu-gcc",
+        // Linux aarch64 (musl) cross-compilation
+        CFLAGS_aarch64_unknown_linux_musl: "-D__ARM_ARCH=8",
+        CXX_aarch64_unknown_linux_musl: "aarch64-linux-musl-g++",
+        CC_aarch64_unknown_linux_musl: "aarch64-linux-musl-gcc",
     },
 }).exited;
 
