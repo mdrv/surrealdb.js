@@ -129,7 +129,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Dry run publish
-        run: cd packages/node && bun run deploy --dry-run
+        run: cd packages/node && bun run deploy:node --dry-run
 
   # Actual publish (only if not dry run)
   publish:
@@ -170,6 +170,6 @@ jobs:
           merge-multiple: true
 
       - name: Publish
-        run: cd packages/node && bun run deploy
+        run: cd packages/node && bun run deploy:node
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
