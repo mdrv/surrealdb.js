@@ -25,12 +25,10 @@ jobs:
           - name: Linux x86_64 (gnu)
             host: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
-            build: bun run build:node --target x86_64-unknown-linux-gnu
 
           - name: Linux aarch64 (gnu)
             host: ubuntu-22.04
             target: aarch64-unknown-linux-gnu
-            build: bun run build:node --target aarch64-unknown-linux-gnu
     steps:
       - name: Code Checkout
         uses: actions/checkout@v6
@@ -65,9 +63,10 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Build
+      - name: Build Node package
         shell: bash
-        run: ${{ matrix.settings.build }}
+        working-directory: packages/node
+        run: bun run build ${{ matrix.settings.target == 'aarch64-unknown-linux-gnu' && '--target aarch64-unknown-linux-gnu' || '' }}
         env:
           CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
           CXX_aarch64_unknown_linux_gnu: aarch64-linux-gnu-g++
@@ -129,7 +128,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Dry run publish
-        run: cd packages/node && bun run deploy:node --dry-run
+        run: cd packages/node && bun run deploy --dry-run
 
   # Actual publish (only if not dry run)
   publish:
@@ -170,6 +169,6 @@ jobs:
           merge-multiple: true
 
       - name: Publish
-        run: cd packages/node && bun run deploy:node
+        run: cd packages/node && bun run deploy
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
