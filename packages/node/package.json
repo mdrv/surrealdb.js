@@ -1,5 +1,5 @@
 {
-    "name": "@surrealdb/node",
+    "name": "@mdrv/surreal-node",
     "version": "3.0.3",
     "surreal": "3.0.2",
     "type": "module",
