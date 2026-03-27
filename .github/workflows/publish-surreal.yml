@@ -116,7 +116,7 @@ jobs:
             build: bun run build:node --target aarch64-apple-darwin
 
           - name: Linux aarch64 (gnu)
-            host: ubuntu-latest-arm64
+            host: ubuntu-22.04
             target: aarch64-unknown-linux-gnu
             build: bun run build:node --target aarch64-unknown-linux-gnu
 
