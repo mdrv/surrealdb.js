@@ -35,7 +35,8 @@ const nameMap: Record<string, string> = {
     "@surrealdb/wasm": "@mdrv/surrealdb-wasm",
 };
 const publishName = nameMap[name] ?? name;
-if (publishName !== name) {
+const isRemapped = publishName !== name;
+if (isRemapped) {
     pkg.name = publishName;
     await Bun.write("package.json", JSON.stringify(pkg, null, 2));
     console.log(`✏️ Renamed ${name} → ${publishName}`);
@@ -58,7 +59,7 @@ if (values.channel) {
 }
 
 // Packing
-const safeName = name.replaceAll("@", "-");
+const safeName = name.replace("@", "").replaceAll("/", "-");
 const packCmd = ["bun", "pm", "pack"];
 
 console.log(`📦 Packing ${name}@${version}...`);
@@ -78,7 +79,6 @@ const publishCmd = [
     "npm",
     "publish",
     `${safeName}-${version}.tgz`,
-    "--provenance",
     "--loglevel",
     "silly",
     "--access",
