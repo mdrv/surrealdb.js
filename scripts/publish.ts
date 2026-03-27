@@ -60,7 +60,7 @@ if (values.channel) {
 
 // Auth
 
-console.log("🔐 Checking npm auth");
+console.log("🔐 Verify auth");
 
 await Bun.spawn(["npm", "whoami"], {
     stdout: "inherit",

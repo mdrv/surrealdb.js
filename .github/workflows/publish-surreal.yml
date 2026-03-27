@@ -38,6 +38,11 @@ jobs:
       - name: Validate package versions
         run: bun run validate:versions
 
+      - name: Verify auth
+        run: bun whoami
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   # Build WASM package (depends on SDK)
   build-wasm:
     name: Build WASM
