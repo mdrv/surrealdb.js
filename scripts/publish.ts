@@ -58,6 +58,15 @@ if (values.channel) {
     channel = values.channel;
 }
 
+// Auth
+
+console.log("🔐 Checking npm auth");
+
+await Bun.spawn(["npm", "whoami"], {
+    stdout: "inherit",
+    stderr: "inherit",
+}).exited;
+
 // Packing
 const safeName = name.replace("@", "").replaceAll("/", "-");
 const packCmd = ["bun", "pm", "pack"];
@@ -76,7 +85,7 @@ if (values.continue && packCode !== 0) {
 
 // Publishing
 const publishCmd = [
-    "npm",
+    "bun",
     "publish",
     `${safeName}-${version}.tgz`,
     "--loglevel",
