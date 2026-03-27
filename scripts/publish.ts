@@ -26,7 +26,21 @@ if (!packageExists) {
     process.exit(1);
 }
 
-const { name, version } = await packageFile.json();
+const pkg = await packageFile.json();
+let { name, version } = pkg;
+
+// Override package name for fork publishing
+const nameMap: Record<string, string> = {
+    "@surrealdb/node": "@mdrv/surrealdb-node",
+    "@surrealdb/wasm": "@mdrv/surrealdb-wasm",
+};
+const publishName = nameMap[name] ?? name;
+if (publishName !== name) {
+    pkg.name = publishName;
+    await Bun.write("package.json", JSON.stringify(pkg, null, 2));
+    console.log(`✏️ Renamed ${name} → ${publishName}`);
+    name = publishName;
+}
 
 // Compute channel
 let channel = "latest";
