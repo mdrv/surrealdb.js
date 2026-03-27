@@ -8,8 +8,8 @@ console.log("🔍 Validating package versions...");
 const packages = await resolvePackages();
 
 // Find specific packages
-const wasmPackage = packages.get("@surrealdb/wasm");
-const nodePackage = packages.get("@surrealdb/node");
+const wasmPackage = packages.get("@mdrv/surrealdb-wasm");
+const nodePackage = packages.get("@mdrv/surrealdb-node");
 const surrealdbPackage = packages.get("surrealdb");
 
 if (!wasmPackage || !nodePackage || !surrealdbPackage) {
@@ -19,13 +19,13 @@ if (!wasmPackage || !nodePackage || !surrealdbPackage) {
 
 // Check that WASM and Node packages have the same version
 if (wasmPackage.version !== nodePackage.version) {
-    console.log("❌ @surrealdb/wasm and @surrealdb/node have different versions:");
-    console.log(`   @surrealdb/wasm: ${wasmPackage.version}`);
-    console.log(`   @surrealdb/node: ${nodePackage.version}`);
+    console.log("❌ @mdrv/surrealdb-wasm and @mdrv/surrealdb-node have different versions:");
+    console.log(`   @mdrv/surrealdb-wasm: ${wasmPackage.version}`);
+    console.log(`   @mdrv/surrealdb-node: ${nodePackage.version}`);
     process.exit(1);
 }
 
-console.log(`✅ @surrealdb/wasm and @surrealdb/node have the same version: ${wasmPackage.version}`);
+console.log(`✅ @mdrv/surrealdb-wasm and @mdrv/surrealdb-node have the same version: ${wasmPackage.version}`);
 
 const sdkVersion = surrealdbPackage.version;
 

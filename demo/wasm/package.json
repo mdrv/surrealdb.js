@@ -6,7 +6,7 @@
         "demo": "vite"
     },
     "dependencies": {
-        "@surrealdb/wasm": "workspace:*",
+        "@mdrv/surrealdb-wasm": "workspace:*",
         "surrealdb": "workspace:*"
     },
     "devDependencies": {
