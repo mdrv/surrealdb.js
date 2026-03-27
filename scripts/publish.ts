@@ -85,7 +85,7 @@ if (values.continue && packCode !== 0) {
 
 // Publishing
 const publishCmd = [
-    "bun",
+    "npm",
     "publish",
     `${safeName}-${version}.tgz`,
     "--loglevel",
