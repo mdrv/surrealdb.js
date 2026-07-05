@@ -306,3 +306,6 @@ jobs:
 
       - name: Publish all packages
         run: bun run deploy:surreal ${{ github.event.inputs.continue == 'true' && '--continue' || '' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}

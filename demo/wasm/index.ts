@@ -1,5 +1,5 @@
-import { createWasmWorkerEngines } from "@surrealdb/wasm";
-import WorkerAgent from "@surrealdb/wasm/worker?worker";
+import { createWasmWorkerEngines } from "@mdrv/surrealdb-wasm";
+import WorkerAgent from "@mdrv/surrealdb-wasm/worker?worker";
 import * as surrealdb from "surrealdb";
 import { createRemoteEngines, Surreal } from "surrealdb";
 

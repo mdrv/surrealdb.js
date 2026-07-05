@@ -1,0 +1,122 @@
+name: Test surrealdb-node native binding
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # --- GNU: bare runners (no container) ---
+          - os: ubuntu-24.04
+            label: linux-x64-gnu-ubuntu
+          - os: ubuntu-24.04-arm
+            label: linux-arm64-gnu-ubuntu
+
+          # --- GNU: Arch Linux ---
+          - os: ubuntu-24.04
+            label: linux-x64-gnu-arch
+            container: archlinux:latest
+          - os: ubuntu-24.04-arm
+            label: linux-arm64-gnu-arch
+            container: ghcr.io/menci/archlinuxarm:latest
+
+          # --- GNU: Fedora ---
+          - os: ubuntu-24.04
+            label: linux-x64-gnu-fedora
+            container: fedora:latest
+          - os: ubuntu-24.04-arm
+            label: linux-arm64-gnu-fedora
+            container: fedora:latest
+
+          # --- GNU: Debian ---
+          - os: ubuntu-24.04
+            label: linux-x64-gnu-debian
+            container: debian:bookworm-slim
+          - os: ubuntu-24.04-arm
+            label: linux-arm64-gnu-debian
+            container: debian:bookworm-slim
+
+          # --- MUSL: Alpine ---
+          - os: ubuntu-24.04
+            label: linux-x64-musl-alpine
+            container: alpine:latest
+          - os: ubuntu-24.04-arm
+            label: linux-arm64-musl-alpine
+            alpine-docker: true
+
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container || null }}
+    name: ${{ matrix.label }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Bun (bare Ubuntu runner)
+        if: ${{ !matrix.container && !matrix.alpine-docker }}
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install deps + Bun (Arch)
+        if: ${{ contains(matrix.label, 'arch') }}
+        run: |
+          pacman -Syu --noconfirm curl unzip bash
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+
+      - name: Install deps + Bun (Fedora)
+        if: ${{ contains(matrix.label, 'fedora') }}
+        run: |
+          dnf install -y curl unzip
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+
+      - name: Install deps + Bun (Debian)
+        if: ${{ contains(matrix.label, 'debian') }}
+        run: |
+          apt-get update && apt-get install -y curl unzip
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+
+      - name: Install deps + Bun (Alpine)
+        if: ${{ contains(matrix.label, 'alpine') && !matrix.alpine-docker }}
+        run: |
+          apk add --no-cache curl bash unzip libstdc++ libgcc
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+
+      - name: Install + test (Alpine via Docker)
+        if: ${{ matrix.alpine-docker }}
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            alpine:latest \
+            sh -c '
+              apk add --no-cache curl bash unzip libstdc++ libgcc &&
+              curl -fsSL https://bun.sh/install | bash &&
+              export PATH="$HOME/.bun/bin:$PATH" &&
+              mkdir -p /tmp/test-upstream && cd /tmp/test-upstream &&
+              bun add @surrealdb/node &&
+              bun -e "import { createNodeEngines } from '"'"'@surrealdb/node'"'"'; console.log('"'"'upstream OK:'"'"', !!createNodeEngines)" &&
+              mkdir -p /tmp/test-fork && cd /tmp/test-fork &&
+              bun add @mdrv/surrealdb-node &&
+              bun -e "import { createNodeEngines } from '"'"'@mdrv/surrealdb-node'"'"'; console.log('"'"'fork OK:'"'"', !!createNodeEngines)"
+            '
+
+      - name: Test upstream @surrealdb/node
+        if: ${{ !matrix.alpine-docker }}
+        run: |
+          mkdir -p /tmp/test && cd /tmp/test
+          bun add @surrealdb/node @mdrv/surrealdb-node
+          bun -e "import { createNodeEngines } from '@surrealdb/node'; console.log('upstream OK:', !!createNodeEngines)"
+        continue-on-error: true
+
+      - name: Test fork @mdrv/surrealdb-node
+        if: ${{ !matrix.alpine-docker }}
+        run: |
+          cd /tmp/test
+          bun -e "import { createNodeEngines } from '@mdrv/surrealdb-node'; console.log('fork OK:', !!createNodeEngines)"

@@ -22,14 +22,14 @@
     "demo/node": {
       "name": "@surrealdb/node-demo",
       "dependencies": {
-        "@surrealdb/node": "workspace:*",
+        "@mdrv/surrealdb-node": "workspace:*",
         "surrealdb": "workspace:*",
       },
     },
     "demo/wasm": {
       "name": "@surrealdb/wasm-demo",
       "dependencies": {
-        "@surrealdb/wasm": "workspace:*",
+        "@mdrv/surrealdb-wasm": "workspace:*",
         "surrealdb": "workspace:*",
       },
       "devDependencies": {
@@ -38,8 +38,8 @@
       },
     },
     "packages/node": {
-      "name": "@surrealdb/node",
-      "version": "3.0.3",
+      "name": "@mdrv/surrealdb-node",
+      "version": "3.0.4",
       "devDependencies": {
         "@napi-rs/cli": "^3.1.5",
         "dedent": "^1.7.0",
@@ -51,7 +51,7 @@
     },
     "packages/sdk": {
       "name": "surrealdb",
-      "version": "2.0.3",
+      "version": "2.0.4",
       "dependencies": {
         "@surrealdb/sqon": "workspace:*",
       },
@@ -67,7 +67,7 @@
     },
     "packages/spectron": {
       "name": "@surrealdb/spectron",
-      "version": "1.0.0-alpha.3",
+      "version": "1.0.0-alpha.4",
       "devDependencies": {
         "@types/bun": "^1.2.21",
         "openapi-typescript": "^7.10.0",
@@ -78,7 +78,7 @@
     },
     "packages/sqon": {
       "name": "@surrealdb/sqon",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@surrealdb/cbor": "2.0.0-alpha.4",
         "uuidv7": "^1.0.1",
@@ -94,16 +94,16 @@
     "packages/tests": {
       "name": "@surrealdb/tests",
       "dependencies": {
+        "@mdrv/surrealdb-node": "workspace:*",
+        "@mdrv/surrealdb-wasm": "workspace:*",
         "@surrealdb/cbor": "2.0.0-alpha.4",
-        "@surrealdb/node": "workspace:*",
         "@surrealdb/spectron": "workspace:*",
-        "@surrealdb/wasm": "workspace:*",
         "get-port": "^7.1.0",
         "surrealdb": "workspace:*",
       },
     },
     "packages/wasm": {
-      "name": "@surrealdb/wasm",
+      "name": "@mdrv/surrealdb-wasm",
       "version": "3.0.4",
       "devDependencies": {
         "surrealdb": "^2.0.1",
@@ -223,6 +223,10 @@
     "@inquirer/select": ["@inquirer/select@4.3.2", "", { "dependencies": { "@inquirer/core": "^10.2.0", "@inquirer/figures": "^1.0.13", "@inquirer/type": "^3.0.8", "ansi-escapes": "^4.3.2", "yoctocolors-cjs": "^2.1.2" }, "peerDependencies": { "@types/node": ">=18" }, "optionalPeers": ["@types/node"] }, "sha512-nwous24r31M+WyDEHV+qckXkepvihxhnyIaod2MG7eCE6G0Zm/HUF6jgN8GXgf4U7AU6SLseKdanY195cwvU6w=="],
 
     "@inquirer/type": ["@inquirer/type@3.0.8", "", { "peerDependencies": { "@types/node": ">=18" }, "optionalPeers": ["@types/node"] }, "sha512-lg9Whz8onIHRthWaN1Q9EGLa/0LFJjyM8mEUbL1eTi6yMGvBf8gvyDLtxSXztQsxMvhxxNpJYrwa1YHdq+w4Jw=="],
+
+    "@mdrv/surrealdb-node": ["@mdrv/surrealdb-node@workspace:packages/node"],
+
+    "@mdrv/surrealdb-wasm": ["@mdrv/surrealdb-wasm@workspace:packages/wasm"],
 
     "@napi-rs/cli": ["@napi-rs/cli@3.1.5", "", { "dependencies": { "@inquirer/prompts": "^7.4.0", "@napi-rs/cross-toolchain": "^1.0.0", "@napi-rs/wasm-tools": "^1.0.0", "@octokit/rest": "^22.0.0", "clipanion": "^4.0.0-rc.4", "colorette": "^2.0.20", "debug": "^4.4.0", "emnapi": "^1.4.0", "es-toolkit": "^1.39.8", "find-up": "^7.0.0", "js-yaml": "^4.1.0", "semver": "^7.7.1", "typanion": "^3.14.0" }, "peerDependencies": { "@emnapi/runtime": "^1.1.0" }, "optionalPeers": ["@emnapi/runtime"], "bin": { "napi": "dist/cli.js", "napi-raw": "cli.mjs" } }, "sha512-Wn6ZPw27qJiEWglGjkaAa70AHuLtyPya6FvjINYJ5U20uvbRhoB0Ta2+bFTAFfUb9R+wvuFvog9JQdy65OmFAQ=="],
 
@@ -444,8 +448,6 @@
 
     "@surrealdb/cbor": ["@surrealdb/cbor@2.0.0-alpha.4", "", {}, "sha512-l/hNZ3ZCOJq8rzwx1y5ZV/8b2bYCWdhGqRVY33Pu50NAHyAW5qLsMn3ZBkZow77mAKwNCsbDsRGnyYEuU95mjw=="],
 
-    "@surrealdb/node": ["@surrealdb/node@workspace:packages/node"],
-
     "@surrealdb/node-demo": ["@surrealdb/node-demo@workspace:demo/node"],
 
     "@surrealdb/spectron": ["@surrealdb/spectron@workspace:packages/spectron"],
@@ -453,8 +455,6 @@
     "@surrealdb/sqon": ["@surrealdb/sqon@workspace:packages/sqon"],
 
     "@surrealdb/tests": ["@surrealdb/tests@workspace:packages/tests"],
-
-    "@surrealdb/wasm": ["@surrealdb/wasm@workspace:packages/wasm"],
 
     "@surrealdb/wasm-demo": ["@surrealdb/wasm-demo@workspace:demo/wasm"],
 
