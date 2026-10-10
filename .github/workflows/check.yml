@@ -487,10 +487,19 @@ jobs:
   # The native addon is built in the SurrealDB repository. Vercel and AWS Lambda run
   # Amazon Linux 2023 (glibc 2.34), so a binary linked against a newer glibc fails
   # at load time with `undefined symbol: __isoc23_strtol`. Load the exact addon
-  # version this repo depends on in that environment (see #609).
+  # version this repo depends on in that environment (see #609). Both architectures
+  # are covered: the aarch64 GNU build has regressed before (#588).
   test-node-native-compat:
-    name: Test Node addon on Amazon Linux 2023
-    runs-on: ubuntu-latest
+    name: Test Node addon on Amazon Linux 2023 (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runs-on: ubuntu-latest
+          - arch: arm64
+            runs-on: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - name: Code Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -498,7 +507,7 @@ jobs:
       - name: Load the native addon on glibc 2.34
         run: |
           version="$(jq -r '.devDependencies["@surrealdb/node-native"]' packages/node/package.json)"
-          docker run --rm --platform linux/amd64 -e "ADDON_VERSION=$version" amazonlinux:2023 bash -euo pipefail -c '
+          docker run --rm --platform linux/${{ matrix.arch }} -e "ADDON_VERSION=$version" amazonlinux:2023 bash -euo pipefail -c '
             dnf -y install --allowerasing nodejs22 nodejs22-npm >/dev/null
             ldd --version | sed -n 1p
             mkdir /t && cd /t
