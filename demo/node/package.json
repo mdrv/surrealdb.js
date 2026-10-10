@@ -6,7 +6,7 @@
         "demo": "bun run demo.ts"
     },
     "dependencies": {
-        "@mdrv/surrealdb-node": "workspace:*",
+        "@surrealdb/node": "workspace:*",
         "surrealdb": "workspace:*"
     }
 }

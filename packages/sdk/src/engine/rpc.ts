@@ -1,9 +1,10 @@
-import { Duration, type Uuid } from "@surrealdb/sqon";
+import type { Uuid } from "@surrealdb/sqon";
 import { ConnectionUnavailableError, UnexpectedServerResponseError } from "../errors";
 import { buildRpcAuth } from "../internal/build-rpc-auth";
 import { getSessionFromState } from "../internal/get-session-from-state";
 import { fetchSurreal } from "../internal/http";
 import { parseQueryError } from "../internal/parse-error";
+import { statsFromTime } from "../internal/query-stats";
 import type {
     AccessRecordAuth,
     AnyAuth,
@@ -14,6 +15,7 @@ import type {
     NamespaceDatabase,
     Nullable,
     QueryChunk,
+    RequestOptions,
     RpcQueryResult,
     RpcRequest,
     Session,
@@ -191,7 +193,30 @@ export abstract class RpcEngine implements SurrealProtocol {
         });
     }
 
-    async importSql(data: string | Blob | ReadableStream): Promise<void> {
+    async importSql(data: string | Blob | ReadableStream, request?: RequestOptions): Promise<void> {
+        await this.importWith(data, request);
+    }
+
+    async exportSql(
+        options: Partial<SqlExportOptions>,
+        request?: RequestOptions,
+    ): Promise<Response> {
+        return this.exportWith(options, request);
+    }
+
+    async exportMlModel(options: MlExportOptions, request?: RequestOptions): Promise<Response> {
+        return this.exportMlModelWith(options, request);
+    }
+
+    /**
+     * Import, presenting a token for this import alone when there is one, and otherwise the
+     * credential of the connection, as it is for every request.
+     */
+    protected async importWith(
+        data: string | Blob | ReadableStream,
+        request: RequestOptions | undefined,
+        token?: Token,
+    ): Promise<void> {
         if (!this._state) {
             throw new ConnectionUnavailableError();
         }
@@ -207,10 +232,19 @@ export abstract class RpcEngine implements SurrealProtocol {
             headers: {
                 Accept: "application/json",
             },
+            token,
+            signal: request?.signal,
         });
     }
 
-    async exportSql(options: Partial<SqlExportOptions>): Promise<Response> {
+    /**
+     * Export, presenting a token for this export alone when there is one. See `importWith()`.
+     */
+    protected async exportWith(
+        options: Partial<SqlExportOptions>,
+        request: RequestOptions | undefined,
+        token?: Token,
+    ): Promise<Response> {
         if (!this._state) {
             throw new ConnectionUnavailableError();
         }
@@ -226,10 +260,20 @@ export abstract class RpcEngine implements SurrealProtocol {
             headers: {
                 Accept: "plain/text",
             },
+            token,
+            signal: request?.signal,
         });
     }
 
-    async exportMlModel(options: MlExportOptions): Promise<Response> {
+    /**
+     * Export a model, presenting a token for this export alone when there is one. See
+     * `importWith()`.
+     */
+    protected async exportMlModelWith(
+        options: MlExportOptions,
+        request: RequestOptions | undefined,
+        token?: Token,
+    ): Promise<Response> {
         if (!this._state) {
             throw new ConnectionUnavailableError();
         }
@@ -242,17 +286,53 @@ export abstract class RpcEngine implements SurrealProtocol {
         return fetchSurreal(this._context, this._state, this._state.rootSession, {
             url: endpoint,
             method: "GET",
+            token,
+            signal: request?.signal,
         });
     }
 
-    async *query<T>(query: BoundQuery, session: Session, txn?: Uuid): AsyncIterable<QueryChunk<T>> {
-        const responses: RpcQueryResult[] = await this.send({
-            method: "query",
-            params: [query.query, query.bindings],
-            session,
-            txn,
-        });
+    query<T>(
+        query: BoundQuery,
+        session: Session,
+        txn?: Uuid,
+        options?: RequestOptions,
+    ): AsyncIterable<QueryChunk<T>> {
+        return this.#dispatchQuery<T>("query", query, session, txn, options);
+    }
 
+    gql<T>(
+        query: BoundQuery,
+        session: Session,
+        txn?: Uuid,
+        options?: RequestOptions,
+    ): AsyncIterable<QueryChunk<T>> {
+        return this.#dispatchQuery<T>("gql", query, session, txn, options);
+    }
+
+    async *#dispatchQuery<T>(
+        method: "query" | "gql",
+        query: BoundQuery,
+        session: Session,
+        txn?: Uuid,
+        options?: RequestOptions,
+    ): AsyncIterable<QueryChunk<T>> {
+        const responses: RpcQueryResult[] = await this.send(
+            {
+                method,
+                params: [query.query, query.bindings],
+                session,
+                txn,
+            },
+            options,
+        );
+
+        yield* this.toChunks<T>(responses);
+    }
+
+    /**
+     * Translate the statement results of a `query` request into chunks
+     */
+    protected *toChunks<T>(responses: RpcQueryResult[]): Iterable<QueryChunk<T>> {
         let index = 0;
 
         for (const response of responses) {
@@ -260,13 +340,7 @@ export abstract class RpcEngine implements SurrealProtocol {
                 query: index++,
                 batch: 0,
                 kind: "single",
-                stats: {
-                    bytesReceived: -1,
-                    bytesScanned: -1,
-                    recordsReceived: -1,
-                    recordsScanned: -1,
-                    duration: Duration.parseFloat(response.time),
-                },
+                stats: statsFromTime(response.time),
             };
 
             if (response.status === "OK") {
@@ -303,7 +377,14 @@ export abstract class RpcEngine implements SurrealProtocol {
         throw new UnexpectedServerResponseError(response);
     }
 
+    /**
+     * Send a request and resolve with its result.
+     *
+     * With a `signal` in the options, an engine stops waiting for the answer once it aborts, and
+     * rejects with the reason of the signal.
+     */
     abstract send<Method extends string, Params extends unknown[] | undefined, Result>(
         request: RpcRequest<Method, Params>,
+        options?: RequestOptions,
     ): Promise<Result>;
 }

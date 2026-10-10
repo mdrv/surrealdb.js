@@ -43,17 +43,8 @@ if (values.channel) {
     channel = values.channel;
 }
 
-// Verify auth
-
-console.log(`🔐 Verify auth...`);
-
-await Bun.spawn(["npm", "whoami"], {
-    stdout: "inherit",
-    stderr: "inherit",
-});
-
 // Packing
-const safeName = name.replaceAll("@", "").replaceAll("/", "-");
+const safeName = name.replaceAll("@", "-");
 const packCmd = ["bun", "pm", "pack"];
 
 console.log(`📦 Packing ${name}@${version}...`);

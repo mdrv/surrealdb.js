@@ -4,10 +4,10 @@
     "private": true,
     "dependencies": {
         "@surrealdb/cbor": "2.0.0-alpha.4",
-        "@surrealdb/spectron": "workspace:*",
+        "@surrealdb/memory": "workspace:*",
         "surrealdb": "workspace:*",
-        "@mdrv/surrealdb-node": "workspace:*",
-        "@mdrv/surrealdb-wasm": "workspace:*",
+        "@surrealdb/node": "workspace:*",
+        "@surrealdb/wasm": "workspace:*",
         "get-port": "^7.1.0"
     }
 }

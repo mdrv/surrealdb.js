@@ -1,4 +1,4 @@
-import type { SqonError } from "@surrealdb/sqon";
+import { Duration, type SqonError } from "@surrealdb/sqon";
 import type { Feature } from "./internal/feature";
 import type { ApiResponse } from "./query/api";
 import type { Session } from "./types";
@@ -63,6 +63,18 @@ export class UnexpectedServerResponseError extends SurrealError {
         super(`The server returned an unexpected response: ${JSON.stringify(response)}`);
         this.response = response;
     }
+}
+
+/**
+ * Thrown when a streamed query answer cannot be trusted, either because the server speaks a
+ * revision of the streaming protocol this SDK does not implement, or because the answer
+ * contradicts itself - for instance a stream which ends having reported a different number of
+ * statements than it delivered.
+ *
+ * A stream that fails this way has not been completed, whatever it had yielded by then.
+ */
+export class StreamProtocolError extends SurrealError {
+    override name = "StreamProtocolError";
 }
 
 /**
@@ -221,7 +233,12 @@ export type QueryErrorDetail =
     | {
           readonly kind: "TimedOut";
           readonly details: {
-              readonly duration: { readonly secs: number; readonly nanos: number };
+              /**
+               * The exceeded timeout. The binary protocols decode this to a `Duration`; a plain
+               * `{ secs, nanos }` object is also accepted. Use `QueryError.timeout` to read it
+               * as a `Duration` regardless.
+               */
+              readonly duration: Duration | { readonly secs: number; readonly nanos: number };
           };
       }
     | { readonly kind: "Cancelled" }
@@ -402,10 +419,20 @@ export class QueryError extends ServerError {
         return this.details?.kind === "TransactionConflict";
     }
 
-    /** The timeout duration, if this is a timeout error. Returns `{ secs, nanos }` or undefined. */
-    get timeout(): { secs: number; nanos: number } | undefined {
+    /**
+     * The timeout which was exceeded, if this is a timeout error, or `undefined` otherwise.
+     *
+     * This is always a `Duration`, whichever engine or protocol received the error, so it can
+     * be used as is, e.g. passed to `.timeout()` of a query builder.
+     */
+    get timeout(): Duration | undefined {
         if (this.details?.kind !== "TimedOut") return undefined;
-        return this.details.details?.duration;
+
+        const duration = this.details.details?.duration;
+        if (!duration) return undefined;
+        if (duration instanceof Duration) return duration;
+
+        return new Duration([duration.secs, duration.nanos]);
     }
 }
 
@@ -554,6 +581,22 @@ export class AuthenticationError extends SurrealError {
         super();
         this.cause = cause;
     }
+}
+
+/**
+ * Thrown when the `authentication` resolver provided to `connect()` throws, or returns
+ * something which is not a token, authentication details, or `null`. The underlying
+ * problem is available as the `cause`.
+ *
+ * The message deliberately does not repeat the cause, nor anything which was returned,
+ * as either may contain credentials.
+ *
+ * When the resolver is evaluated for a request, the request is not sent and the state of
+ * the session is left as it was.
+ */
+export class AuthResolverError extends AuthenticationError {
+    override name = "AuthResolverError";
+    override message = "The authentication resolver did not provide usable credentials";
 }
 
 /**

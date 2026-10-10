@@ -1,5 +1,6 @@
 import { UUID, uuidv4obj, uuidv7obj } from "uuidv7";
 import { JsonCodec } from "../codec/json/codec.ts";
+import { isSharedArrayBuffer } from "../internal/shared-array-buffer.ts";
 import { hasSymbol, markSymbol, UUID_SYMBOL } from "../utils/symbols.ts";
 import { Value } from "./value.ts";
 
@@ -11,7 +12,7 @@ export class Uuid extends Value {
         return hasSymbol(instance, UUID_SYMBOL);
     }
 
-    readonly #inner: UUID;
+    private readonly _inner: UUID;
 
     /**
      * Constructs a new Uuid by cloning an existing uuid
@@ -38,51 +39,51 @@ export class Uuid extends Value {
     constructor(uuid: Uuid | UUID | string | ArrayBufferLike | Uint8Array) {
         super();
 
-        if (uuid instanceof ArrayBuffer || uuid instanceof SharedArrayBuffer) {
-            this.#inner = UUID.ofInner(new Uint8Array(uuid));
+        if (uuid instanceof ArrayBuffer || isSharedArrayBuffer(uuid)) {
+            this._inner = UUID.ofInner(new Uint8Array(uuid));
         } else if (uuid instanceof Uint8Array) {
-            this.#inner = UUID.ofInner(uuid);
+            this._inner = UUID.ofInner(uuid);
         } else if (uuid instanceof Uuid) {
-            this.#inner = uuid.#inner;
+            this._inner = uuid._inner;
         } else if (uuid instanceof UUID) {
-            this.#inner = uuid;
+            this._inner = uuid;
         } else {
-            this.#inner = UUID.parse(uuid);
+            this._inner = UUID.parse(uuid);
         }
         markSymbol(this, UUID_SYMBOL);
     }
 
     equals(other: unknown): boolean {
         if (!(other instanceof Uuid)) return false;
-        return this.#inner.equals(other.#inner);
+        return this._inner.equals(other._inner);
     }
 
     toJSON(): unknown {
         if (Value._useExperimentalToJson) {
             return JsonCodec.DEFAULT.encode(this);
         }
-        return this.#inner.toString();
+        return this._inner.toString();
     }
 
     /**
      * @returns The string representation of the UUID
      */
     toString(): string {
-        return this.#inner.toString();
+        return this._inner.toString();
     }
 
     /**
      * Converts the UUID to a Uint8Array
      */
     toUint8Array(): Uint8Array {
-        return this.#inner.bytes;
+        return this._inner.bytes;
     }
 
     /**
      * Converts the UUID to a ArrayBuffer
      */
     toBuffer(): ArrayBufferLike {
-        return this.#inner.bytes.buffer;
+        return this._inner.bytes.buffer;
     }
 
     /**
