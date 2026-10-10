@@ -38,7 +38,7 @@ jobs:
         run: bun ci
 
       - name: Validate package versions
-        run: bun run validate:versions ${{ github.event.inputs.version }}
+        run: bun run validate:versions
 
   # Build SDK package
   build-sdk:

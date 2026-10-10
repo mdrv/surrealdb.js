@@ -1,5 +1,13 @@
 name: Test surrealdb-node native binding
 
+#
+# Watchdog comparing the published upstream engine against the fork's fixed build
+# on every supported Linux distro/arch, under Bun (the runtime that exposes broken
+# native linkage). Since surrealdb/surrealdb.js#660, @surrealdb/node is a thin wrapper
+# around @surrealdb/node-native (the addon is built in surrealdb/surrealdb), so a
+# failure here usually means the node-native binaries regressed. The fork package
+# @mdrv/surrealdb-node is frozen at 3.0.4 - the last release whose GNU binaries link
+# correctly against libstdc++/libgcc.
 on:
   workflow_dispatch:
 
@@ -107,12 +115,13 @@ jobs:
               bun -e "import { createNodeEngines } from '"'"'@mdrv/surrealdb-node'"'"'; console.log('"'"'fork OK:'"'"', !!createNodeEngines)"
             '
 
-      - name: Test upstream @surrealdb/node
+      - name: Test upstream @surrealdb/node (+ node-native)
         if: ${{ !matrix.alpine-docker }}
         run: |
           mkdir -p /tmp/test && cd /tmp/test
-          bun add @surrealdb/node @mdrv/surrealdb-node
+          bun add @surrealdb/node @surrealdb/node-native @mdrv/surrealdb-node
           bun -e "import { createNodeEngines } from '@surrealdb/node'; console.log('upstream OK:', !!createNodeEngines)"
+          bun -e "import('@surrealdb/node-native').then(() => console.log('node-native OK')).catch((e) => console.log('node-native FAILS:', ((e.cause ?? e).message ?? String(e)).split('\n')[0]))"
         continue-on-error: true
 
       - name: Test fork @mdrv/surrealdb-node
